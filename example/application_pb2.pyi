@@ -1,12 +1,14 @@
 # ############################################################################# #
-#  Automatically generated protobuf typings for python                          #
+#  Automatically generated protobuf stub files for python                       #
 #   by protoc-gen-python-typings plugin for protoc                              #
 # ############################################################################# #
 
-from google.protobuf.message import Message
+from typing import List
+
 from google.protobuf.descriptor import FieldDescriptor
-from typing import List, Union
 from google.protobuf.internal.well_known_types import Timestamp
+from google.protobuf.message import Message
+
 
 A: int = 0
 B: int = 1
