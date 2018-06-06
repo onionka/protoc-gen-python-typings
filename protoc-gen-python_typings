@@ -1,0 +1,348 @@
+#!/usr/bin/python3
+import sys
+from abc import ABC, abstractmethod
+from typing import List
+
+from google.protobuf.compiler import plugin_pb2
+from google.protobuf.descriptor import FieldDescriptor
+from google.protobuf.descriptor_pb2 import FileDescriptorProto
+
+GRPC_TYPE_TO_PYTHON_TYPE = {
+    FieldDescriptor.TYPE_DOUBLE: 'float',
+    FieldDescriptor.TYPE_FLOAT: 'float',
+    FieldDescriptor.TYPE_INT64: 'int',
+    FieldDescriptor.TYPE_UINT64: 'int',
+    FieldDescriptor.TYPE_INT32: 'int',
+    FieldDescriptor.TYPE_FIXED64: 'float',
+    FieldDescriptor.TYPE_FIXED32: 'float',
+    FieldDescriptor.TYPE_BOOL: 'bool',
+    FieldDescriptor.TYPE_STRING: 'str',
+    FieldDescriptor.TYPE_BYTES: 'bytes',
+    FieldDescriptor.TYPE_UINT32: 'int',
+    FieldDescriptor.TYPE_ENUM: 'int',
+    FieldDescriptor.TYPE_SFIXED32: 'float',
+    FieldDescriptor.TYPE_SFIXED64: 'float',
+    FieldDescriptor.TYPE_SINT32: 'int',
+    FieldDescriptor.TYPE_SINT64: 'int',
+    FieldDescriptor.TYPE_GROUP: 'Group',
+    FieldDescriptor.TYPE_MESSAGE: 'Message',
+}
+
+DEFAULT_TAB_STR = '    '
+
+
+class AbstractStubGenerator(ABC):
+    """Base class for all construction (message, enum, field, ...) representations in proto file
+       with `generate` method that returns its representation in python"""
+
+    @abstractmethod
+    def generate(self, indentation: int, indentation_str: str) -> str:
+        pass
+
+
+class FieldType(ABC):
+    """Base class for all field type representations in proto file
+       with `generate` method that returns its representation in python"""
+
+    @abstractmethod
+    def generate(self) -> str:
+        pass
+
+
+class _Header(AbstractStubGenerator):
+    def generate(self, indentation: int, indentation_str: str):
+        return """\
+# ############################################################################# #
+#  Automatically generated protobuf stub files for python                       #
+#   by protoc-gen-python-typings plugin for protoc                              #
+# ############################################################################# #
+
+"""
+
+
+class _NewLine(AbstractStubGenerator):
+    def generate(self, indentation: int, indentation_str: str):
+        return "\n"
+
+
+class _Noop(AbstractStubGenerator):
+    TEMPLATE = "{indent}pass\n"
+
+    def generate(self, indentation: int, indentation_str: str) -> str:
+        return self.TEMPLATE.format(
+            indent=indentation_str * indentation
+        )
+
+
+HEADER = _Header()
+NO_OP = _Noop()
+NEW_LINE = _NewLine()
+
+# forbid constructing singletons
+del _Noop
+del _NewLine
+
+
+class EnumValue(AbstractStubGenerator):
+    TEMPLATE = "{indent}{name}: int = {value}\n"
+
+    def __init__(self, name: str, value: int):
+        self._name = name
+        self._value = value
+
+    def generate(self, indentation: int, indentation_str: str) -> str:
+        return self.TEMPLATE.format(
+            name=self._name,
+            value=self._value,
+            indent=indentation_str * indentation
+        )
+
+
+class Field(AbstractStubGenerator):
+    TEMPLATE = "{indent}{name}: {type} = ...\n"
+
+    def __init__(self, value_type: FieldType, name: str):
+        self._type = value_type
+        self._name = name
+
+    def generate(self, indentation: int, indentation_str: str) -> str:
+        return self.TEMPLATE.format(
+            name=self._name,
+            type=self._type.generate(),
+            indent=indentation_str * indentation
+        )
+
+
+class ConsArg(AbstractStubGenerator):
+    TEMPLATE = "{indent}{name}: {type} = None,\n"
+
+    def __init__(self, value_type: FieldType, name: str):
+        self._type = value_type
+        self._name = name
+
+    def generate(self, indentation: int, indentation_str: str) -> str:
+        return self.TEMPLATE.format(
+            name=self._name,
+            type=self._type.generate(),
+            indent=indentation_str * indentation
+        )
+
+
+class Cons(AbstractStubGenerator):
+    TEMPLATE = """
+{indent}def __init__(self{args}):
+{indent}    pass
+"""
+
+    def __init__(self, *args: ConsArg):
+        self._args = args
+
+    def generate(self, indentation: int, indentation_str: str):
+        return self.TEMPLATE.format(args=(
+            ",\n" + " " * 13 + (" " * 13).join(
+                a.generate(indentation, indentation_str)
+                for a in self._args
+            )[:-2] if self._args else ""
+        ), indent=indentation_str * indentation)
+
+
+class Message(AbstractStubGenerator):
+    TEMPLATE = """\
+{indent}class {class_name}(Message):
+{fields}
+{indent_inner}# region <<<Message Implementation>>>
+{indent_inner}def __eq__(self, other_msg: '{parent_path}{class_name}') -> bool: ...
+{indent_inner}def __str__(self) -> str: ...
+{indent_inner}def __unicode__(self) -> str: ...
+{indent_inner}def MergeFrom(self, other_msg: '{parent_path}{class_name}'): ...
+{indent_inner}def Clear(self): ...
+{indent_inner}def SetInParent(self): ...
+{indent_inner}def IsInitialized(self) -> bool: ...
+{indent_inner}def MergeFromString(self, serialized: str): ...
+{indent_inner}def SerializeToString(self, **kwargs) -> str: ...
+{indent_inner}def SerializePartialToString(self, **kwargs) -> str: ...
+{indent_inner}def ListFields(self) -> List[FieldDescriptor]: ...
+{indent_inner}def HasField(self, field_name: str) -> bool: ...
+{indent_inner}def ClearField(self, field_name: str): ...
+{indent_inner}def WhichOneof(self, oneof_group: str): ...
+{indent_inner}def HasExtension(self, extension_handle: str) -> bool: ...
+{indent_inner}def ClearExtension(self, extension_handle): ...
+{indent_inner}def DiscardUnknownFields(self): ...
+{indent_inner}def ByteSize(self) -> int: ...
+{indent_inner}def _SetListener(self, message_listener): ...
+
+{indent_inner}# endregion <<<Message Implementation>>>
+{indent_inner}...
+{nested_lines}"""
+
+    def __init__(self, name: str, parents: List[str], *inner: AbstractStubGenerator, is_nested: bool = False):
+        self._name = name
+        self._parent_path = ".".join(parents) + ("." if parents else "")
+
+        self._inner = list(inner)
+        self._nested_lines = "\n" if is_nested else ""
+        if not self._inner:
+            self._inner.append(NO_OP)
+
+    def generate(self, indentation: int, indentation_str: str) -> str:
+        return self.TEMPLATE.format(
+            class_name=self._name,
+            parent_path=self._parent_path,
+            fields="".join(i.generate(indentation + 1, indentation_str) for i in self._inner),
+            nested_lines=self._nested_lines,
+            indent=indentation_str * indentation,
+            indent_inner=indentation_str * (indentation + 1)
+        )
+
+
+class Import(AbstractStubGenerator):
+    IMPORT_FROM_TEMPLATE = "{indent}from {path} import {items}\n"
+    IMPORT_TEMPLATE = "{indent}import {path}\n"
+
+    def __init__(self, path: str, items: List[str] = None):
+        # replace `.proto` with `_pb2` name suffix that is used in python generated files
+        # but in imports `.py` is omitted
+        if path.endswith('.proto'):
+            path = path[:-6] + "_pb2"
+        # this is relative path to the known paths in `PYTHONPATH` environment variable
+        # so we just need to replace / for . to get it work
+        if '/' in path:
+            path = path.replace('/', '.')
+        self._path = path
+        self._from_items = ", ".join(items) if items else None
+
+    def generate(self, indentation: int, indentation_str: str) -> str:
+        if self._from_items:
+            return self.IMPORT_FROM_TEMPLATE.format(
+                path=self._path,
+                items=self._from_items,
+                indent=indentation_str * indentation
+            )
+        return self.IMPORT_TEMPLATE.format(
+            path=self._path,
+            indent=indentation_str * indentation
+        )
+
+
+class File(AbstractStubGenerator):
+    def __init__(self, *inners: AbstractStubGenerator):
+        self._inners = list(inners)
+
+    def add(self, *inners: AbstractStubGenerator):
+        self._inners.extend(inners)
+
+    def generate(self, indentation: int, indentation_str: str) -> str:
+        return "".join(i.generate(indentation, indentation_str) for i in self._inners)
+
+
+class SimpleType(FieldType):
+    def __init__(self, value_type: str, repeated: bool):
+        self._value_type = value_type
+        if repeated:
+            self._value_type = "List[{}]".format(self._value_type)
+
+    def generate(self) -> str:
+        return self._value_type
+
+
+class MessageType(FieldType):
+    def __init__(self, reference: str, repeated: bool):
+        self._value_type = reference
+        if repeated:
+            self._value_type = "List[{}]".format(self._value_type)
+
+    def generate(self) -> str:
+        return self._value_type
+
+
+class OneOfGroupType(FieldType):
+    def __init__(self, *fields: FieldType):
+        self._value_type = "Union[{}]".format(", ".join(f.generate() for f in fields))
+
+    def generate(self) -> str:
+        return self._value_type
+
+
+def create_type(field) -> FieldType:
+    if field.type == FieldDescriptor.TYPE_MESSAGE:
+        return MessageType(field.type_name.split(".")[-1], repeated=field.label == FieldDescriptor.LABEL_REPEATED)
+    if field.type == FieldDescriptor.TYPE_GROUP:
+        return OneOfGroupType()
+    return SimpleType(GRPC_TYPE_TO_PYTHON_TYPE[field.type], repeated=field.label == FieldDescriptor.LABEL_REPEATED)
+
+
+def generate_message_stub(msg, parents=None, nested=False) -> Message:
+    """Generates the message"""
+    parents = parents or []
+    return Message(
+        msg.name,
+        parents,
+        *[EnumValue(value.name, value.number)
+          for enum in msg.enum_type
+          for value in enum.value],
+        *[generate_message_stub(nested_msg, parents + [msg.name], True)
+          for nested_msg in msg.nested_type],
+        *([NEW_LINE] if msg.enum_type else []),
+        *[Field(create_type(field), field.name) for field in msg.field],
+        Cons(*[ConsArg(create_type(field), field.name) for field in msg.field]),
+        is_nested=nested
+    )
+
+
+def generate_pb2_file_content(input: FileDescriptorProto) -> str:
+    """Generates typing stub file for messages"""
+    stub_file = File(
+        HEADER,
+        Import("google.protobuf.message", ["Message"]),
+        Import("google.protobuf.descriptor", ["FieldDescriptor"]),
+        Import("typing", ["List", "Union"]),
+    )
+
+    for dependency in input.dependency:
+        if dependency == 'google/api/annotations.proto':
+            continue
+        if dependency == 'google/protobuf/timestamp.proto':
+            stub_file.add(Import("google.protobuf.internal.well_known_types", ["Timestamp"]))
+            continue
+        if not dependency.startswith('google'):
+            stub_file.add(Import(dependency, ["*"]))
+
+    if input.enum_type:
+        stub_file.add(NEW_LINE)
+
+    for msg in input.enum_type:
+        for value in msg.value:
+            stub_file.add(EnumValue(value.name, value.number))
+
+    stub_file.add(NEW_LINE)
+    stub_file.add(NEW_LINE)
+
+    for msg in input.message_type:
+        stub_file.add(generate_message_stub(msg))
+
+    return stub_file.generate(0, DEFAULT_TAB_STR)
+
+
+if __name__ == '__main__':
+    # Read request message from stdin
+    data = sys.stdin.buffer.read()
+
+    # Parse request
+    request = plugin_pb2.CodeGeneratorRequest()
+    request.ParseFromString(data)
+
+    # Create response
+    response = plugin_pb2.CodeGeneratorResponse()
+
+    for proto_file in request.proto_file:
+        if proto_file.name in request.file_to_generate:
+            response.file.add(
+                name="{}_pb2.pyi".format(proto_file.name[:-6]),
+                content=generate_pb2_file_content(proto_file)
+            )
+
+    # Serialise response message
+    output = response.SerializeToString()
+
+    # Write to stdout
+    sys.stdout.buffer.write(output)

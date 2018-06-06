@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/dashly/app/backend/chipmunk/gateway/application";
+
+
+enum SimpleEnum {
+    A = 0;
+    B = 1;
+    C = 3;
+}
+
+
+message SimpleMessage {
+    uint32 id = 1;
+
+    google.protobuf.Timestamp startFrom = 2;
+    google.protobuf.Timestamp until = 3;
+
+    repeated SimpleEnum enumField = 4;
+
+    message InnerMessage {
+        enum SimpleInnerEnum {
+            A = 0;
+            B = 1;
+            C = 3;
+        }
+
+
+        uint32 id = 1;
+
+        google.protobuf.Timestamp startFrom = 2;
+
+        SimpleInnerEnum enumField = 3;
+    }
+}
