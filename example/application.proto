@@ -2,6 +2,7 @@ syntax = "proto3";
 
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
 
 option go_package = "github.com/dashly/app/backend/chipmunk/gateway/application";
 
@@ -20,8 +21,55 @@ message SimpleMessage {
     google.protobuf.Timestamp until = 3;
 
     repeated SimpleEnum enumField = 4;
+    repeated InnerMessage messageField = 5;
+    repeated InnerMessage1 messageField1 = 6;
 
     message InnerMessage {
+        enum SimpleInnerEnum {
+            A = 0;
+            B = 1;
+            C = 3;
+        }
+
+
+        uint32 id = 1;
+
+        google.protobuf.Timestamp startFrom = 2;
+
+        SimpleInnerEnum enumField = 3;
+    }
+
+    message InnerMessage1{
+        enum SimpleInnerEnum {
+            A = 0;
+            B = 1;
+            C = 3;
+        }
+
+
+        uint32 id = 1;
+
+        google.protobuf.Timestamp startFrom = 2;
+
+        SimpleInnerEnum enumField = 3;
+    }
+
+    message InnerMessage2 {
+        enum SimpleInnerEnum {
+            A = 0;
+            B = 1;
+            C = 3;
+        }
+
+
+        uint32 id = 1;
+
+        google.protobuf.Timestamp startFrom = 2;
+
+        SimpleInnerEnum enumField = 3;
+    }
+
+    message InnerMessage3 {
         enum SimpleInnerEnum {
             A = 0;
             B = 1;
