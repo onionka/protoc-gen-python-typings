@@ -196,11 +196,11 @@ class Import(CodePart):
 
 
 class File(CodePart):
+    """File holds all parts together and its generate method will run recursive
+       stub generation with certain indentation
+    """
     def __init__(self, *inners: CodePart):
         self._inners = list(inners)
-
-    def add(self, *inners: CodePart):
-        self._inners.extend(inners)
 
     def generate(self, indentation: int, indentation_str: str) -> str:
         return "".join(i.generate(indentation, indentation_str) for i in self._inners)
