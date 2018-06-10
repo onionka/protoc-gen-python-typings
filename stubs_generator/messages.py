@@ -1,23 +1,6 @@
-from typing import List, Type, cast
+from typing import List
 
-from .bases import CodePart, FieldType
-
-
-class ConstantPart(CodePart):
-    def __init__(self, const_data: str):
-        self._data = const_data
-
-    def generate(self, indentation: int, indentation_str: str):
-        return self._data.format(
-            indent=indentation_str * indentation,
-            indent_inner=indentation_str * (indentation + 1)
-        )
-
-
-ConstantPart = cast(Type[CodePart], ConstantPart)
-
-NEW_LINE = ConstantPart("\n")
-NO_OP = ConstantPart("{indent}pass\n")
+from .base import CodePart, FieldType, NO_OP
 
 
 class EnumValue(CodePart):
@@ -199,6 +182,7 @@ class File(CodePart):
     """File holds all parts together and its generate method will run recursive
        stub generation with certain indentation
     """
+
     def __init__(self, *inners: CodePart):
         self._inners = list(inners)
 

@@ -2,57 +2,33 @@
 import sys
 
 from google.protobuf.compiler import plugin_pb2
-from google.protobuf.descriptor import FieldDescriptor
 from google.protobuf.descriptor_pb2 import FileDescriptorProto
 
 from stubs_generator.base import ConstantPart, NEW_LINE
-from stubs_generator.messages import Constructor, ConstructorParameter, EnumValue, Field, File, Import, Message
+from stubs_generator.messages import File, Import
+from stubs_generator.servicers import AbstractMethod, Servicer, StubMethod, Stub, AddToServerMethod
 from stubs_generator.utils import before_every, before_if_not_empty, decode_type
 
 DEFAULT_TAB_STR = '    '
 
 
-def generate_message_stub(msg, parents=None) -> Message:
-    """Generates the message recursively"""
-    return Message(
-        msg.name,
-        parents or [],
-        # Message enumerator values
-        *[EnumValue(value.name, value.number)
-          for enum in msg.enum_type
-          for value in enum.value],
-        # Nested messages
-        *before_every(
-            [NEW_LINE],
-            *[generate_message_stub(nested_msg, (parents or []) + [msg.name])
-              for nested_msg in msg.nested_type]),
-        # Message fields
-        *before_if_not_empty(
-            [NEW_LINE],
-            *[Field(decode_type(field.type, field.type_name, field.label == FieldDescriptor.LABEL_REPEATED), field.name)
-              for field in msg.field]),
-        Constructor(*[ConstructorParameter(decode_type(field.type, field.type_name, field.label == FieldDescriptor.LABEL_REPEATED), field.name)
-                      for field in msg.field]),
-    )
-
-
-def generate_pb2_stub_file_content(proto_descriptor: FileDescriptorProto) -> str:
+def generate_pb2_grpc_stub_file_content(proto_descriptor: FileDescriptorProto) -> str:
     """Generates typing stub file for messages"""
     return File(
         # Header for a file
         ConstantPart("""\
 # ############################################################################# #
 #  Automatically generated protobuf stub files for python                       #
-#   by protoc-gen-python_typings plugin for protoc                              #
+#   by protoc-gen-python_grpc_typings plugin for protoc                         #
 # ############################################################################# #
 
 """),
         # Typing imports
-        Import("typing", ["List"]),
+        Import("abc", ["ABC", "abstractmethod"]),
+        Import("grpc", ["*"]),
+        Import(".{}_pb2".format(proto_file.name[:-6]), ["*"]),
         NEW_LINE,
         # Global imports
-        Import("google.protobuf.descriptor", ["FieldDescriptor"]),
-        Import("google.protobuf.message", ["Message"]),
         *[Import("google.protobuf.internal.well_known_types", ["Timestamp"])
           if dependency == 'google/protobuf/timestamp.proto' else
           Import(dependency, ["*"])
@@ -64,17 +40,29 @@ def generate_pb2_stub_file_content(proto_descriptor: FileDescriptorProto) -> str
             *[Import(dependency, ["*"])
               for dependency in proto_descriptor.dependency
               if not dependency.startswith('google')]),
-        # Global enumerator values
-        *before_if_not_empty(
-            [NEW_LINE],
-            *[EnumValue(value.name, value.number)
-              for msg in proto_descriptor.enum_type
-              for value in msg.value]),
-        # Messages
+        # Stub servicer
         *before_every(
             [NEW_LINE, NEW_LINE],
-            *[generate_message_stub(msg)
-              for msg in proto_descriptor.message_type]),
+            *[Stub(
+                s.name,
+                *[StubMethod(meth.name, decode_type(name=meth.input_type), decode_type(name=meth.output_type))
+                  for meth in s.method]
+            ) for s in proto_descriptor.service]
+        ),
+        # Abstract servicer
+        *before_every(
+            [NEW_LINE, NEW_LINE],
+            *[Servicer(
+                s.name,
+                *[AbstractMethod(meth.name, decode_type(name=meth.input_type), decode_type(name=meth.output_type))
+                  for meth in s.method]
+            ) for s in proto_descriptor.service]
+        ),
+        *before_every(
+            [NEW_LINE, NEW_LINE],
+            *[AddToServerMethod(s.name)
+              for s in proto_descriptor.service]
+        )
     ).generate(0, DEFAULT_TAB_STR)
 
 
@@ -92,8 +80,8 @@ if __name__ == '__main__':
     for proto_file in request.proto_file:
         if proto_file.name in request.file_to_generate:
             response.file.add(
-                name="{}_pb2.pyi".format(proto_file.name[:-6]),
-                content=generate_pb2_stub_file_content(proto_file)
+                name="{}_pb2_grpc.pyi".format(proto_file.name[:-6]),
+                content=generate_pb2_grpc_stub_file_content(proto_file)
             )
 
     # Serialise response message

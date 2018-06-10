@@ -2,7 +2,7 @@ from typing import List
 
 from google.protobuf.descriptor import FieldDescriptor
 
-from stubs_generator.bases import CodePart, FieldType
+from stubs_generator.base import CodePart, FieldType
 from stubs_generator.fields import MessageType, OneOfGroupType, SimpleType
 
 
@@ -45,10 +45,14 @@ GRPC_TYPE_TO_PYTHON_TYPE = {
 }
 
 
-def decode_type(field) -> FieldType:
+def decode_type(type: int = FieldDescriptor.TYPE_MESSAGE, name: str = None, repeated: bool = False) -> FieldType:
     """Decodes a type of field and creates appropriate descriptor for it"""
-    if field.type == FieldDescriptor.TYPE_MESSAGE:
-        return MessageType(field.type_name.split(".")[-1], repeated=field.label == FieldDescriptor.LABEL_REPEATED)
-    if field.type == FieldDescriptor.TYPE_GROUP:
+    if type == FieldDescriptor.TYPE_MESSAGE:
+        assert name is not None
+        return MessageType(name.split(".")[-1], repeated=repeated)
+    if type == FieldDescriptor.TYPE_GROUP:
         return OneOfGroupType()  # FIXME: TYPE_GROUP was not used in oneof construction
-    return SimpleType(GRPC_TYPE_TO_PYTHON_TYPE[field.type], repeated=field.label == FieldDescriptor.LABEL_REPEATED)
+    try:
+        return SimpleType(GRPC_TYPE_TO_PYTHON_TYPE[type], repeated=repeated)
+    except Exception as ex:
+        raise Exception(str(type)) from ex

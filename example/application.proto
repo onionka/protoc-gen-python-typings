@@ -84,3 +84,9 @@ message SimpleMessage {
         SimpleInnerEnum enumField = 3;
     }
 }
+
+
+service UserMortgageService {
+    rpc Check (SimpleMessage) returns (SimpleMessage);
+    rpc Check2 (SimpleMessage) returns (SimpleMessage);
+}

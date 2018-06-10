@@ -1,6 +1,6 @@
 # ############################################################################# #
 #  Automatically generated protobuf stub files for python                       #
-#   by protoc-gen-python-typings plugin for protoc                              #
+#   by protoc-gen-python_typings plugin for protoc                              #
 # ############################################################################# #
 
 from typing import List

@@ -1,4 +1,4 @@
-from stubs_generator.bases import FieldType
+from stubs_generator.base import FieldType
 
 
 class SimpleType(FieldType):

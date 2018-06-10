@@ -23,7 +23,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   name='application.proto',
   package='',
   syntax='proto3',
-  serialized_pb=_b('\n\x11\x61pplication.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\"\xd3\x07\n\rSimpleMessage\x12\n\n\x02id\x18\x01 \x01(\r\x12-\n\tstartFrom\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12)\n\x05until\x18\x03 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x1e\n\tenumField\x18\x04 \x03(\x0e\x32\x0b.SimpleEnum\x12\x31\n\x0cmessageField\x18\x05 \x03(\x0b\x32\x1b.SimpleMessage.InnerMessage\x12\x33\n\rmessageField1\x18\x06 \x03(\x0b\x32\x1c.SimpleMessage.InnerMessage1\x1a\xb1\x01\n\x0cInnerMessage\x12\n\n\x02id\x18\x01 \x01(\r\x12-\n\tstartFrom\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12>\n\tenumField\x18\x03 \x01(\x0e\x32+.SimpleMessage.InnerMessage.SimpleInnerEnum\"&\n\x0fSimpleInnerEnum\x12\x05\n\x01\x41\x10\x00\x12\x05\n\x01\x42\x10\x01\x12\x05\n\x01\x43\x10\x03\x1a\xb3\x01\n\rInnerMessage1\x12\n\n\x02id\x18\x01 \x01(\r\x12-\n\tstartFrom\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12?\n\tenumField\x18\x03 \x01(\x0e\x32,.SimpleMessage.InnerMessage1.SimpleInnerEnum\"&\n\x0fSimpleInnerEnum\x12\x05\n\x01\x41\x10\x00\x12\x05\n\x01\x42\x10\x01\x12\x05\n\x01\x43\x10\x03\x1a\xb3\x01\n\rInnerMessage2\x12\n\n\x02id\x18\x01 \x01(\r\x12-\n\tstartFrom\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12?\n\tenumField\x18\x03 \x01(\x0e\x32,.SimpleMessage.InnerMessage2.SimpleInnerEnum\"&\n\x0fSimpleInnerEnum\x12\x05\n\x01\x41\x10\x00\x12\x05\n\x01\x42\x10\x01\x12\x05\n\x01\x43\x10\x03\x1a\xb3\x01\n\rInnerMessage3\x12\n\n\x02id\x18\x01 \x01(\r\x12-\n\tstartFrom\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12?\n\tenumField\x18\x03 \x01(\x0e\x32,.SimpleMessage.InnerMessage3.SimpleInnerEnum\"&\n\x0fSimpleInnerEnum\x12\x05\n\x01\x41\x10\x00\x12\x05\n\x01\x42\x10\x01\x12\x05\n\x01\x43\x10\x03*!\n\nSimpleEnum\x12\x05\n\x01\x41\x10\x00\x12\x05\n\x01\x42\x10\x01\x12\x05\n\x01\x43\x10\x03\x42<Z:github.com/dashly/app/backend/chipmunk/gateway/applicationb\x06proto3')
+  serialized_pb=_b('\n\x11\x61pplication.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\"\xd3\x07\n\rSimpleMessage\x12\n\n\x02id\x18\x01 \x01(\r\x12-\n\tstartFrom\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12)\n\x05until\x18\x03 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12\x1e\n\tenumField\x18\x04 \x03(\x0e\x32\x0b.SimpleEnum\x12\x31\n\x0cmessageField\x18\x05 \x03(\x0b\x32\x1b.SimpleMessage.InnerMessage\x12\x33\n\rmessageField1\x18\x06 \x03(\x0b\x32\x1c.SimpleMessage.InnerMessage1\x1a\xb1\x01\n\x0cInnerMessage\x12\n\n\x02id\x18\x01 \x01(\r\x12-\n\tstartFrom\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12>\n\tenumField\x18\x03 \x01(\x0e\x32+.SimpleMessage.InnerMessage.SimpleInnerEnum\"&\n\x0fSimpleInnerEnum\x12\x05\n\x01\x41\x10\x00\x12\x05\n\x01\x42\x10\x01\x12\x05\n\x01\x43\x10\x03\x1a\xb3\x01\n\rInnerMessage1\x12\n\n\x02id\x18\x01 \x01(\r\x12-\n\tstartFrom\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12?\n\tenumField\x18\x03 \x01(\x0e\x32,.SimpleMessage.InnerMessage1.SimpleInnerEnum\"&\n\x0fSimpleInnerEnum\x12\x05\n\x01\x41\x10\x00\x12\x05\n\x01\x42\x10\x01\x12\x05\n\x01\x43\x10\x03\x1a\xb3\x01\n\rInnerMessage2\x12\n\n\x02id\x18\x01 \x01(\r\x12-\n\tstartFrom\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12?\n\tenumField\x18\x03 \x01(\x0e\x32,.SimpleMessage.InnerMessage2.SimpleInnerEnum\"&\n\x0fSimpleInnerEnum\x12\x05\n\x01\x41\x10\x00\x12\x05\n\x01\x42\x10\x01\x12\x05\n\x01\x43\x10\x03\x1a\xb3\x01\n\rInnerMessage3\x12\n\n\x02id\x18\x01 \x01(\r\x12-\n\tstartFrom\x18\x02 \x01(\x0b\x32\x1a.google.protobuf.Timestamp\x12?\n\tenumField\x18\x03 \x01(\x0e\x32,.SimpleMessage.InnerMessage3.SimpleInnerEnum\"&\n\x0fSimpleInnerEnum\x12\x05\n\x01\x41\x10\x00\x12\x05\n\x01\x42\x10\x01\x12\x05\n\x01\x43\x10\x03*!\n\nSimpleEnum\x12\x05\n\x01\x41\x10\x00\x12\x05\n\x01\x42\x10\x01\x12\x05\n\x01\x43\x10\x03\x32h\n\x13UserMortgageService\x12\'\n\x05\x43heck\x12\x0e.SimpleMessage\x1a\x0e.SimpleMessage\x12(\n\x06\x43heck2\x12\x0e.SimpleMessage\x1a\x0e.SimpleMessageB<Z:github.com/dashly/app/backend/chipmunk/gateway/applicationb\x06proto3')
   ,
   dependencies=[google_dot_api_dot_annotations__pb2.DESCRIPTOR,google_dot_protobuf_dot_timestamp__pb2.DESCRIPTOR,google_dot_protobuf_dot_empty__pb2.DESCRIPTOR,])
 
@@ -476,4 +476,37 @@ _sym_db.RegisterMessage(SimpleMessage.InnerMessage3)
 
 DESCRIPTOR.has_options = True
 DESCRIPTOR._options = _descriptor._ParseOptions(descriptor_pb2.FileOptions(), _b('Z:github.com/dashly/app/backend/chipmunk/gateway/application'))
+
+_USERMORTGAGESERVICE = _descriptor.ServiceDescriptor(
+  name='UserMortgageService',
+  full_name='UserMortgageService',
+  file=DESCRIPTOR,
+  index=0,
+  options=None,
+  serialized_start=1130,
+  serialized_end=1234,
+  methods=[
+  _descriptor.MethodDescriptor(
+    name='Check',
+    full_name='UserMortgageService.Check',
+    index=0,
+    containing_service=None,
+    input_type=_SIMPLEMESSAGE,
+    output_type=_SIMPLEMESSAGE,
+    options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='Check2',
+    full_name='UserMortgageService.Check2',
+    index=1,
+    containing_service=None,
+    input_type=_SIMPLEMESSAGE,
+    output_type=_SIMPLEMESSAGE,
+    options=None,
+  ),
+])
+_sym_db.RegisterServiceDescriptor(_USERMORTGAGESERVICE)
+
+DESCRIPTOR.services_by_name['UserMortgageService'] = _USERMORTGAGESERVICE
+
 # @@protoc_insertion_point(module_scope)
