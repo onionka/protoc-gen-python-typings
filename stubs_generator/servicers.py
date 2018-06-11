@@ -88,7 +88,7 @@ class Servicer(CodePart):
 
 class AddToServerMethod(CodePart):
     TEMPLATE = """\
-{indent}def add_{name}Servicer_to_server(servicer: {name}Servicer):
+{indent}def add_{name}Servicer_to_server(servicer: {name}Servicer, server: Server):
 {indent}{noop}\
 """
 

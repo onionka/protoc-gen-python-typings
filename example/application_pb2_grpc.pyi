@@ -5,7 +5,7 @@
 
 from abc import ABC, abstractmethod
 from application_pb2 import *
-from grpc import ServicerContext, Channel
+from grpc import ServicerContext, Channel, Server
 
 
 class UserMortgageServiceStub(object):
@@ -29,5 +29,5 @@ class UserMortgageServiceServicer(ABC):
         pass
 
 
-def add_UserMortgageServiceServicer_to_server(servicer: UserMortgageServiceServicer):
+def add_UserMortgageServiceServicer_to_server(servicer: UserMortgageServiceServicer, server: Server):
     pass

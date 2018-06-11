@@ -15,7 +15,7 @@ DEFAULT_TAB_STR = '    '
 def generate_pb2_grpc_stub_file_content(proto_descriptor: FileDescriptorProto) -> str:
     """Generates typing stub file for messages"""
     import_pool = ImportPool()
-    import_pool.add(Import('grpc', ['ServicerContext', 'Channel']))
+    import_pool.add(Import('grpc', ['ServicerContext', 'Channel', 'Server']))
     import_pool.add(Import('abc', ['ABC', 'abstractmethod']))
     return File(
         # Header for a file

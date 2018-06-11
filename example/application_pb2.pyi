@@ -12,12 +12,17 @@ from google.protobuf.timestamp_pb2 import *
 from typing import List
 
 
-A: int = 0B: int = 1C: int = 3
+A: int = 0
+B: int = 1
+C: int = 3
 
 class SimpleMessage(Message):
 
     class InnerMessage(Message):
-        A: int = 0        B: int = 1        C: int = 3
+
+        A: int = 0
+        B: int = 1
+        C: int = 3
         id: int = ...
         startFrom: Timestamp = ...
         enumField: int = ...
@@ -52,7 +57,10 @@ class SimpleMessage(Message):
         ...
 
     class InnerMessage1(Message):
-        A: int = 0        B: int = 1        C: int = 3
+
+        A: int = 0
+        B: int = 1
+        C: int = 3
         id: int = ...
         startFrom: Timestamp = ...
         enumField: int = ...
@@ -87,7 +95,10 @@ class SimpleMessage(Message):
         ...
 
     class InnerMessage2(Message):
-        A: int = 0        B: int = 1        C: int = 3
+
+        A: int = 0
+        B: int = 1
+        C: int = 3
         id: int = ...
         startFrom: Timestamp = ...
         enumField: int = ...
@@ -122,7 +133,10 @@ class SimpleMessage(Message):
         ...
 
     class InnerMessage3(Message):
-        A: int = 0        B: int = 1        C: int = 3
+
+        A: int = 0
+        B: int = 1
+        C: int = 3
         id: int = ...
         startFrom: Timestamp = ...
         enumField: int = ...

@@ -19,10 +19,9 @@ stored into `{PROTO_NAME}_pb2_grpc.pyi`.
 
 ## Installation
 
-To install this plugin, just create a symbolic reference into the PATH directory to the both of the executable scripts:
+To install this plugin, just run `pip install` with path to this repository:
 ```bash
-$ sudo ln -s $(pwd)/protoc-gen-python_typings /usr/bin/protoc-gen-python_typings
-$ sudo ln -s $(pwd)/protoc-gen-grpc_python_typings /usr/bin/protoc-gen-grpc_python_typings
+$ sudo pip install ./
 ```
 
 ## Usage
@@ -41,6 +40,6 @@ $ protoc ./example/application.proto --python_typings_out=./example --python_out
 
  - [X] extensible template background for both plugins
  - [X] working simple typing generator, that was protoc missing
- - [ ] generating proper type imports instead of provisional '*'
+ - [X] setup.py
+ - [X] generating proper type imports
  - [ ] tests
- - [ ] setup.py
