@@ -1,12 +1,10 @@
-from typing import List
+from typing import List, Union
 
 from .base import CodePart, FieldType, NO_OP
 
 
 class EnumValue(CodePart):
-    TEMPLATE = """\
-{indent}{name}: int = {value}
-"""
+    TEMPLATE = """{indent}{name}: int = {value}"""
 
     def __init__(self, name: str, value: int):
         self._name = name
@@ -21,9 +19,7 @@ class EnumValue(CodePart):
 
 
 class Field(CodePart):
-    TEMPLATE = """\
-{indent}{name}: {type} = ...
-"""
+    TEMPLATE = """{indent}{name}: {type} = ..."""
 
     def __init__(self, value_type: FieldType, name: str):
         self._type = value_type
@@ -38,9 +34,7 @@ class Field(CodePart):
 
 
 class ConstructorParameter(CodePart):
-    TEMPLATE = """\
-{indent}{name}: {type} = None,
-"""
+    TEMPLATE = """{indent}{name}: {type} = None,"""
 
     def __init__(self, value_type: FieldType, name: str):
         self._type = value_type
@@ -66,10 +60,10 @@ class Constructor(CodePart):
     def generate(self, indentation: int, indentation_str: str):
         return self.TEMPLATE.format(
             args=(
-                ",\n" + "".join(
+                ",\n" + "\n".join(
                     " " * 13 + a.generate(indentation, indentation_str)
                     for a in self._args
-                )[:-2] if self._args else ""
+                )[:-1] if self._args else ""
             ),
             indent=indentation_str * indentation,
             indent_inner=indentation_str * (indentation + 1)
@@ -155,24 +149,31 @@ class Import(CodePart):
             indent=indentation_str * indentation
         )
 
+    def __contains__(self, item: 'Union[Import, str]'):
+        if isinstance(item, Import):
+            return item._path == self._path and (not self._from_items or all(i in self._from_items for i in item._from_items))
+        elif isinstance(item, str):
+            path, name = item.split('.')[1:]
+            return path == self._path and (not self._from_items or name in self._from_items)
+
     # region <<<Comparison operators for sorting>>>
     def __lt__(self, other: 'Import') -> bool:
-        return self._path < other._path
+        return self.generate(0, '') < other.generate(0, '')
 
     def __gt__(self, other: 'Import') -> bool:
-        return self._path > other._path
+        return self.generate(0, '') > other.generate(0, '')
 
     def __eq__(self, other: 'Import') -> bool:
-        return self._path == other._path
+        return self.generate(0, '') == other.generate(0, '')
 
     def __le__(self, other: 'Import') -> bool:
-        return self._path <= other._path
+        return self.generate(0, '') <= other.generate(0, '')
 
     def __ge__(self, other: 'Import') -> bool:
-        return self._path >= other._path
+        return self.generate(0, '') >= other.generate(0, '')
 
     def __ne__(self, other: 'Import') -> bool:
-        return self._path != other._path
+        return self.generate(0, '') != other.generate(0, '')
 
     # endregion
     ...

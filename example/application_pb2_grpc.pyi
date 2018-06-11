@@ -4,11 +4,8 @@
 # ############################################################################# #
 
 from abc import ABC, abstractmethod
-from grpc import *
-from .application_pb2 import *
-
-from google.protobuf.internal.well_known_types import Timestamp
-from google.protobuf.empty_pb2 import *
+from application_pb2 import *
+from grpc import ServicerContext, Channel
 
 
 class UserMortgageServiceStub(object):

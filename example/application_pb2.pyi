@@ -3,29 +3,24 @@
 #   by protoc-gen-python_typings plugin for protoc                              #
 # ############################################################################# #
 
+from google.api.annotations_pb2 import *
+from google.protobuf import *
+from google.protobuf.descriptor import FieldDescriptor
+from google.protobuf.empty_pb2 import *
+from google.protobuf.message import Message
+from google.protobuf.timestamp_pb2 import *
 from typing import List
 
-from google.protobuf.descriptor import FieldDescriptor
-from google.protobuf.message import Message
-from google.protobuf.internal.well_known_types import Timestamp
-from google.protobuf.empty_pb2 import *
 
-A: int = 0
-B: int = 1
-C: int = 3
-
+A: int = 0B: int = 1C: int = 3
 
 class SimpleMessage(Message):
 
     class InnerMessage(Message):
-        A: int = 0
-        B: int = 1
-        C: int = 3
-
+        A: int = 0        B: int = 1        C: int = 3
         id: int = ...
         startFrom: Timestamp = ...
         enumField: int = ...
-
         def __init__(self,
                      id: int = None,
                      startFrom: Timestamp = None,
@@ -57,14 +52,10 @@ class SimpleMessage(Message):
         ...
 
     class InnerMessage1(Message):
-        A: int = 0
-        B: int = 1
-        C: int = 3
-
+        A: int = 0        B: int = 1        C: int = 3
         id: int = ...
         startFrom: Timestamp = ...
         enumField: int = ...
-
         def __init__(self,
                      id: int = None,
                      startFrom: Timestamp = None,
@@ -96,14 +87,10 @@ class SimpleMessage(Message):
         ...
 
     class InnerMessage2(Message):
-        A: int = 0
-        B: int = 1
-        C: int = 3
-
+        A: int = 0        B: int = 1        C: int = 3
         id: int = ...
         startFrom: Timestamp = ...
         enumField: int = ...
-
         def __init__(self,
                      id: int = None,
                      startFrom: Timestamp = None,
@@ -135,14 +122,10 @@ class SimpleMessage(Message):
         ...
 
     class InnerMessage3(Message):
-        A: int = 0
-        B: int = 1
-        C: int = 3
-
+        A: int = 0        B: int = 1        C: int = 3
         id: int = ...
         startFrom: Timestamp = ...
         enumField: int = ...
-
         def __init__(self,
                      id: int = None,
                      startFrom: Timestamp = None,
@@ -179,7 +162,6 @@ class SimpleMessage(Message):
     enumField: List[int] = ...
     messageField: List[InnerMessage] = ...
     messageField1: List[InnerMessage1] = ...
-
     def __init__(self,
                  id: int = None,
                  startFrom: Timestamp = None,

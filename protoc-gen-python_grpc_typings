@@ -6,14 +6,17 @@ from google.protobuf.descriptor_pb2 import FileDescriptorProto
 
 from stubs_generator.base import ConstantPart, NEW_LINE
 from stubs_generator.messages import File, Import
-from stubs_generator.servicers import AbstractMethod, Servicer, StubMethod, Stub, AddToServerMethod
-from stubs_generator.utils import before_every, before_if_not_empty, decode_type
+from stubs_generator.servicers import AbstractMethod, AddToServerMethod, Servicer, Stub, StubMethod
+from stubs_generator.utils import ImportPool, before_every, decode_type
 
 DEFAULT_TAB_STR = '    '
 
 
 def generate_pb2_grpc_stub_file_content(proto_descriptor: FileDescriptorProto) -> str:
     """Generates typing stub file for messages"""
+    import_pool = ImportPool()
+    import_pool.add(Import('grpc', ['ServicerContext', 'Channel']))
+    import_pool.add(Import('abc', ['ABC', 'abstractmethod']))
     return File(
         # Header for a file
         ConstantPart("""\
@@ -23,43 +26,33 @@ def generate_pb2_grpc_stub_file_content(proto_descriptor: FileDescriptorProto) -
 # ############################################################################# #
 
 """),
-        # Typing imports
-        Import("abc", ["ABC", "abstractmethod"]),
-        Import("grpc", ["*"]),
-        Import(".{}_pb2".format(proto_file.name[:-6]), ["*"]),
-        NEW_LINE,
-        # Global imports
-        *[Import("google.protobuf.internal.well_known_types", ["Timestamp"])
-          if dependency == 'google/protobuf/timestamp.proto' else
-          Import(dependency, ["*"])
-          for dependency in proto_descriptor.dependency
-          if dependency.startswith('google') and 'google/api/annotations.proto' != dependency],
-        # Local imports
-        *before_if_not_empty(
-            [NEW_LINE],
-            *[Import(dependency, ["*"])
-              for dependency in proto_descriptor.dependency
-              if not dependency.startswith('google')]),
+        import_pool,
         # Stub servicer
         *before_every(
             [NEW_LINE, NEW_LINE],
             *[Stub(
                 s.name,
-                *[StubMethod(meth.name, decode_type(name=meth.input_type), decode_type(name=meth.output_type))
+                *[StubMethod(meth.name,
+                             decode_type(name=meth.input_type,
+                                         import_pool=import_pool,
+                                         proto_name=proto_descriptor.name[:-6]),
+                             decode_type(name=meth.output_type,
+                                         import_pool=import_pool,
+                                         proto_name=proto_descriptor.name[:-6]))
                   for meth in s.method]
-            ) for s in proto_descriptor.service]
-        ),
-        # Abstract servicer
-        *before_every(
-            [NEW_LINE, NEW_LINE],
+            ) for s in proto_descriptor.service],
+            # Abstract servicer
             *[Servicer(
                 s.name,
-                *[AbstractMethod(meth.name, decode_type(name=meth.input_type), decode_type(name=meth.output_type))
+                *[AbstractMethod(meth.name,
+                                 decode_type(name=meth.input_type,
+                                             import_pool=import_pool,
+                                             proto_name=proto_descriptor.name[:-6]),
+                                 decode_type(name=meth.output_type,
+                                             import_pool=import_pool,
+                                             proto_name=proto_descriptor.name[:-6]))
                   for meth in s.method]
-            ) for s in proto_descriptor.service]
-        ),
-        *before_every(
-            [NEW_LINE, NEW_LINE],
+            ) for s in proto_descriptor.service],
             *[AddToServerMethod(s.name)
               for s in proto_descriptor.service]
         )

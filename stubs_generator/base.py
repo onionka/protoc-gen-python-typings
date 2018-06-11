@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import cast, Type
+from typing import Type, cast
 
 
 class FieldType(ABC):
