@@ -1,9 +1,11 @@
+from typing import List
+
 from .base import CodePart, FieldType, NO_OP
 
 
 class StubMethod(CodePart):
     TEMPLATE = """\
-{indent}def {name}(self, request: {arg_type}, timeout: int = 0) -> {return_type}:
+{indent}def {name}(self, request: {arg_type}, timeout: int = None, metadata: Any = None, credentials: CallCredentials = None) -> {return_type}:
 {indent}{noop}\
 """
 
@@ -22,17 +24,35 @@ class StubMethod(CodePart):
         )
 
 
+class _Comments(CodePart):
+    TEMPLATE = '''
+{indent}"""{comment}{multiline_comment}"""\
+'''
+
+    def __init__(self, comments: List[str]):
+        self._comment = comments[0] if comments else None
+        self._multiline = comments[1:] if comments else None
+
+    def generate(self, indentation: int, indentation_str: str) -> str:
+        return self.TEMPLATE.format(
+            comment=self._comment,
+            multiline_comment="\n" + (indentation_str * indentation + "   ").join(self._multiline) if self._multiline else "",
+            indent=indentation_str * indentation
+        ) if any(a.has_comment for a in self._args) else ""
+
+
 class AbstractMethod(CodePart):
     TEMPLATE = """\
 {indent}@abstractmethod    
 {indent}def {name}(self, request: {arg_type}, context: ServicerContext) -> {return_type}:
-{indent}{noop}\
+{comments}\
 """
 
-    def __init__(self, name: str, arg_type: FieldType, return_type: FieldType):
+    def __init__(self, name: str, arg_type: FieldType, return_type: FieldType, comments: List[str] = []):
         self._name = name
         self._arg_type = arg_type
         self._return_type = return_type
+        self._comments = _Comments(comments) if comments else None
 
     def generate(self, indentation: int, indentation_str: str) -> str:
         return self.TEMPLATE.format(
@@ -40,7 +60,7 @@ class AbstractMethod(CodePart):
             arg_type=self._arg_type.generate(),
             return_type=self._return_type.generate(),
             indent=indentation_str * indentation,
-            noop=NO_OP.generate(1, indentation_str)
+            comments=(self._comments or NO_OP).generate(indentation + 1, indentation_str)
         )
 
 

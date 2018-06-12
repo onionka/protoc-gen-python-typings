@@ -4,18 +4,19 @@
 # ############################################################################# #
 
 from abc import ABC, abstractmethod
-from application_pb2 import *
-from grpc import ServicerContext, Channel, Server
+from example.application_pb2 import *
+from grpc import ServicerContext, Channel, Server, CallCredentials
+from typing import Any
 
 
 class UserMortgageServiceStub(object):
     def __init__(self, channel: Channel):
         pass
 
-    def Check(self, request: SimpleMessage, timeout: int = 0) -> SimpleMessage:
+    def Check(self, request: SimpleMessage, timeout: int = None, metadata: Any = None, credentials: CallCredentials = None) -> SimpleMessage:
         pass
 
-    def Check2(self, request: SimpleMessage, timeout: int = 0) -> SimpleMessage:
+    def Check2(self, request: SimpleMessage, timeout: int = None, metadata: Any = None, credentials: CallCredentials = None) -> SimpleMessage:
         pass
 
 

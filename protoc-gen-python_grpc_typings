@@ -7,16 +7,18 @@ from google.protobuf.descriptor_pb2 import FileDescriptorProto
 from stubs_generator.base import ConstantPart, NEW_LINE
 from stubs_generator.messages import File, Import
 from stubs_generator.servicers import AbstractMethod, AddToServerMethod, Servicer, Stub, StubMethod
-from stubs_generator.utils import ImportPool, before_every, decode_type
+from stubs_generator.utils import ImportPool, after_every, decode_type, before_every, get_comments
 
 DEFAULT_TAB_STR = '    '
 
 
 def generate_pb2_grpc_stub_file_content(proto_descriptor: FileDescriptorProto) -> str:
     """Generates typing stub file for messages"""
+    comments = get_comments(proto_file)
     import_pool = ImportPool()
-    import_pool.add(Import('grpc', ['ServicerContext', 'Channel', 'Server']))
+    import_pool.add(Import('grpc', ['ServicerContext', 'Channel', 'Server', 'CallCredentials']))
     import_pool.add(Import('abc', ['ABC', 'abstractmethod']))
+    import_pool.add(Import('typing', ['Any']))
     return File(
         # Header for a file
         ConstantPart("""\
@@ -38,7 +40,8 @@ def generate_pb2_grpc_stub_file_content(proto_descriptor: FileDescriptorProto) -
                                          proto_name=proto_descriptor.name[:-6]),
                              decode_type(name=meth.output_type,
                                          import_pool=import_pool,
-                                         proto_name=proto_descriptor.name[:-6]))
+                                         proto_name=proto_descriptor.name[:-6]),
+                             )
                   for meth in s.method]
             ) for s in proto_descriptor.service],
             # Abstract servicer

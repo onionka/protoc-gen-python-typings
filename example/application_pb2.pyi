@@ -7,30 +7,32 @@ from google.api.annotations_pb2 import *
 from google.protobuf import *
 from google.protobuf.descriptor import FieldDescriptor
 from google.protobuf.empty_pb2 import *
+from google.protobuf.internal.well_known_types import Timestamp
 from google.protobuf.message import Message
-from google.protobuf.timestamp_pb2 import *
 from typing import List
-
 
 A: int = 0
 B: int = 1
 C: int = 3
 
+
 class SimpleMessage(Message):
-
     class InnerMessage(Message):
-
         A: int = 0
         B: int = 1
         C: int = 3
-        id: int = ...
-        startFrom: Timestamp = ...
-        enumField: int = ...
+
         def __init__(self,
                      id: int = None,
                      startFrom: Timestamp = None,
                      enumField: int = None):
-            pass
+            """
+            :param id: Documentation 4 0 3 0 2 0
+            :param startFrom: Documentation 4 0 3 0 2 1
+            """
+            self.id = id
+            self.startFrom = startFrom
+            self.enumField = enumField
 
         # region <<<Message Implementation>>>
         def __eq__(self, other_msg: 'SimpleMessage.InnerMessage') -> bool: ...
@@ -57,18 +59,17 @@ class SimpleMessage(Message):
         ...
 
     class InnerMessage1(Message):
-
         A: int = 0
         B: int = 1
         C: int = 3
-        id: int = ...
-        startFrom: Timestamp = ...
-        enumField: int = ...
+
         def __init__(self,
                      id: int = None,
                      startFrom: Timestamp = None,
                      enumField: int = None):
-            pass
+            self.id = id
+            self.startFrom = startFrom
+            self.enumField = enumField
 
         # region <<<Message Implementation>>>
         def __eq__(self, other_msg: 'SimpleMessage.InnerMessage1') -> bool: ...
@@ -95,18 +96,17 @@ class SimpleMessage(Message):
         ...
 
     class InnerMessage2(Message):
-
         A: int = 0
         B: int = 1
         C: int = 3
-        id: int = ...
-        startFrom: Timestamp = ...
-        enumField: int = ...
+
         def __init__(self,
                      id: int = None,
                      startFrom: Timestamp = None,
                      enumField: int = None):
-            pass
+            self.id = id
+            self.startFrom = startFrom
+            self.enumField = enumField
 
         # region <<<Message Implementation>>>
         def __eq__(self, other_msg: 'SimpleMessage.InnerMessage2') -> bool: ...
@@ -133,18 +133,17 @@ class SimpleMessage(Message):
         ...
 
     class InnerMessage3(Message):
-
         A: int = 0
         B: int = 1
         C: int = 3
-        id: int = ...
-        startFrom: Timestamp = ...
-        enumField: int = ...
+
         def __init__(self,
                      id: int = None,
                      startFrom: Timestamp = None,
                      enumField: int = None):
-            pass
+            self.id = id
+            self.startFrom = startFrom
+            self.enumField = enumField
 
         # region <<<Message Implementation>>>
         def __eq__(self, other_msg: 'SimpleMessage.InnerMessage3') -> bool: ...
@@ -170,12 +169,6 @@ class SimpleMessage(Message):
         # endregion <<<Message Implementation>>>
         ...
 
-    id: int = ...
-    startFrom: Timestamp = ...
-    until: Timestamp = ...
-    enumField: List[int] = ...
-    messageField: List[InnerMessage] = ...
-    messageField1: List[InnerMessage1] = ...
     def __init__(self,
                  id: int = None,
                  startFrom: Timestamp = None,
@@ -183,7 +176,16 @@ class SimpleMessage(Message):
                  enumField: List[int] = None,
                  messageField: List[InnerMessage] = None,
                  messageField1: List[InnerMessage1] = None):
-        pass
+        """
+        :param startFrom: Documentation 4 0 2 1
+        :param until: Documentation 4 0 2 2
+        """
+        self.id = id
+        self.startFrom = startFrom
+        self.until = until
+        self.enumField = enumField
+        self.messageField = messageField
+        self.messageField1 = messageField1
 
     # region <<<Message Implementation>>>
     def __eq__(self, other_msg: 'SimpleMessage') -> bool: ...
@@ -208,3 +210,5 @@ class SimpleMessage(Message):
 
     # endregion <<<Message Implementation>>>
     ...
+
+

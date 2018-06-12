@@ -6,52 +6,56 @@ from google.protobuf.descriptor import FieldDescriptor
 from google.protobuf.descriptor_pb2 import FileDescriptorProto
 
 from stubs_generator.base import ConstantPart, NEW_LINE
-from stubs_generator.messages import Constructor, ConstructorParameter, EnumValue, Field, File, Import, Message
-from stubs_generator.utils import ImportPool, before_every, decode_type
+from stubs_generator.messages import Constructor, ConstructorParameter, EnumValue, File, Import, Message
+from stubs_generator.utils import ImportPool, after_every, before_if_not_empty, decode_type, get_comments
 
 DEFAULT_TAB_STR = '    '
 
 
-def generate_message_stub(proto_name, import_pool, msg, parents=None) -> Message:
+def generate_message_stub(proto_name, import_pool, comments, msg, parents=None) -> Message:
     """Generates the message recursively"""
     return Message(
         msg.name,
         parents or [],
         # Message enumerator values
-        *before_every(
+        *after_every(
             [NEW_LINE],
             *[EnumValue(value.name, value.number)
               for enum in msg.enum_type
               for value in enum.value]
         ),
         # Nested messages
-        *before_every(
-            [NEW_LINE],
-            *[generate_message_stub(proto_name, import_pool, nested_msg, (parents or []) + [msg.name])
-              for nested_msg in msg.nested_type],
-            # Message fields
-            *[Field(decode_type(
-                field.type, field.type_name, field.label == FieldDescriptor.LABEL_REPEATED,
-                import_pool, proto_name, (parents or []) + [msg.name]
-            ), field.name) for field in msg.field]
+        *before_if_not_empty(
+            [],
+            *after_every(
+                [NEW_LINE],
+                *[generate_message_stub(proto_name, import_pool, comments, nested_msg, (parents or []) + [msg.name])
+                  for nested_msg in msg.nested_type]
+            ),
+            _else=[NEW_LINE]
         ),
         Constructor(
             *[ConstructorParameter(decode_type(
                 field.type, field.type_name, field.label == FieldDescriptor.LABEL_REPEATED,
                 import_pool, proto_name, (parents or []) + [msg.name]
-            ), field.name) for field in msg.field]),
+            ), field.name, comments.get(".".join((parents or []) + [msg.name, field.name]), [])) for field in msg.field]
+        ),
     )
 
 
 def generate_pb2_stub_file_content(proto_descriptor: FileDescriptorProto) -> str:
     """Generates typing stub file for messages"""
+    comments = get_comments(proto_file)
     import_pool = ImportPool()
     import_pool.add(Import("typing", ["List"]))
     import_pool.add(Import("google.protobuf.descriptor", ["FieldDescriptor"]))
     import_pool.add(Import("google.protobuf.message", ["Message"]))
 
     for dep in proto_descriptor.dependency:
-        import_pool.add(Import(str(dep)[:-6].replace('/', '.') + '_pb2', ['*']))
+        if "timestamp" in dep:
+            import_pool.add(Import("google.protobuf.internal.well_known_types", ['Timestamp']))
+        else:
+            import_pool.add(Import(str(dep)[:-6].replace('/', '.') + '_pb2', ['*']))
 
     return File(
         # Header for a file
@@ -66,16 +70,21 @@ def generate_pb2_stub_file_content(proto_descriptor: FileDescriptorProto) -> str
         # Typing imports
         NEW_LINE,
         # Global enumerator values
-        *before_every(
+        *after_every(
             [NEW_LINE],
             *[EnumValue(value.name, value.number)
               for msg in proto_descriptor.enum_type
-              for value in msg.value]),
+              for value in msg.value]
+        ),
         # Messages
-        *before_every(
+        *before_if_not_empty(
             [NEW_LINE, NEW_LINE],
-            *[generate_message_stub(proto_descriptor.name[:-6], import_pool, msg)
-              for msg in proto_descriptor.message_type]),
+            *after_every(
+                [NEW_LINE, NEW_LINE],
+                *[generate_message_stub(proto_descriptor.name[:-6], import_pool, comments, msg)
+                  for msg in proto_descriptor.message_type]
+            )
+        ),
     ).generate(0, DEFAULT_TAB_STR)
 
 

@@ -1,4 +1,5 @@
-from typing import List, Union
+from itertools import chain
+from typing import List, Union, Dict, Iterable
 
 from google.protobuf.descriptor import FieldDescriptor
 
@@ -7,21 +8,24 @@ from stubs_generator.fields import MessageType, OneOfGroupType, SimpleType
 from stubs_generator.messages import Import
 
 
+def after_every(items: List[CodePart], *parts: CodePart) -> List[CodePart]:
+    """Inserts after every part a list of items"""
+    return list(chain(*[[p, *items] for p in parts]))
+
+
 def before_every(items: List[CodePart], *parts: CodePart) -> List[CodePart]:
     """Inserts before every part a list of items"""
-
-    def _before_inner():
-        for a in parts:
-            for i in items:
-                yield i
-            yield a
-
-    return list(_before_inner())
+    return list(chain(*[[*items, p] for p in parts]))
 
 
-def before_if_not_empty(items: List[CodePart], *parts: CodePart) -> List[CodePart]:
-    """Inserts before parts a list of items if there are any parts"""
-    return [*items, *parts] if parts else []
+def after_if_not_empty(items: List[CodePart], *parts: CodePart, _else: List[CodePart] = list()) -> List[CodePart]:
+    """Inserts after all parts a list of items if there are any parts"""
+    return [*parts, *items] if parts else _else
+
+
+def before_if_not_empty(items: List[CodePart], *parts: CodePart, _else: List[CodePart] = list()) -> List[CodePart]:
+    """Inserts before all parts a list of items if there are any parts"""
+    return [*items, *parts] if parts else _else
 
 
 GRPC_TYPE_TO_PYTHON_TYPE = {
@@ -74,8 +78,6 @@ def decode_type(type: int = FieldDescriptor.TYPE_MESSAGE, name: str = None, repe
         if import_pool:
             *import_path, cls_name = name.split(".")[1:]
             if not parents or ".".join(import_path) not in ".".join(parents):
-                if repeated:
-                    import_pool.add(Import("typing", ["List"]))
                 if not import_path:
                     import_path = "{}_pb2".format(proto_name).split('/')
                 import_pool.add(Import(".".join(import_path), ['*']))
@@ -87,3 +89,34 @@ def decode_type(type: int = FieldDescriptor.TYPE_MESSAGE, name: str = None, repe
         return SimpleType(GRPC_TYPE_TO_PYTHON_TYPE[type], repeated=repeated)
     except Exception as ex:
         raise Exception(str(type)) from ex
+
+
+def get_comments(pf) -> Dict[str, List[str]]:
+    """Retrieves comments from proto file and creates a dictionary symbol which comment was aimed at"""
+    def _get_inner():
+        for location in pf.source_code_info.location:
+            if location.trailing_comments or location.leading_comments:
+                pf_p = pf
+                cls_path = []
+                for path in location.path:
+                    try:
+                        if hasattr(pf_p, "field") or hasattr(pf_p, "method"):
+                            cls_path.append(pf_p.name)
+                        pf_p = (
+                            list(pf_p)[path]
+                            if isinstance(pf_p, Iterable) else
+                            getattr(pf_p, pf_p.DESCRIPTOR.fields_by_number[path].name)
+                        )
+                    except AttributeError as ex:
+                        raise Exception(pf_p, path) from ex
+
+                # cls_path - parent object names, pf_p - message from decoder
+                # location.trailing_comments - at the end of the line
+                # location.leading_comments - after commented item
+                if location.trailing_comments:
+                    yield ".".join(cls_path + [pf_p.name]), [location.trailing_comments.splitlines()[0]]
+                else:
+                    yield ".".join(cls_path + [pf_p.name]), location.leading_comments.splitlines()
+
+    return dict()
+    # return dict(_get_inner())

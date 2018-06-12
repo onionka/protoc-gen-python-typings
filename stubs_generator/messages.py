@@ -1,6 +1,6 @@
-from typing import List, Union
+from typing import List, Optional, Union
 
-from .base import CodePart, FieldType, NO_OP
+from .base import CodePart, FieldType, NEW_LINE, NO_OP
 
 
 class EnumValue(CodePart):
@@ -19,54 +19,151 @@ class EnumValue(CodePart):
 
 
 class Field(CodePart):
-    TEMPLATE = """{indent}{name}: {type} = ..."""
+    TEMPLATE = """{indent}{name}{type} = {value}"""
 
-    def __init__(self, value_type: FieldType, name: str):
+    def __init__(self, value_type: Optional[FieldType], name: str, value: str = "..."):
         self._type = value_type
         self._name = name
+        self._value = value
 
     def generate(self, indentation: int, indentation_str: str) -> str:
         return self.TEMPLATE.format(
             name=self._name,
-            type=self._type.generate(),
+            value=self._value,
+            type=": {}".format(self._type.generate()) if self._type else "",
             indent=indentation_str * indentation
         )
 
 
-class ConstructorParameter(CodePart):
-    TEMPLATE = """{indent}{name}: {type} = None,"""
+class FieldComment(CodePart):
+    TEMPLATE = """{indent}:param {name}:{comment}{multiline_comment}"""
 
-    def __init__(self, value_type: FieldType, name: str):
-        self._type = value_type
+    def __init__(self, name: str, comment: List[str]):
         self._name = name
+        self._comment = comment
+        self._multiline_comment = "\n{indent}       " + " " * len(self._name) + "  {comment}"
+
+    @property
+    def has_comment(self):
+        return bool(self._comment)
 
     def generate(self, indentation: int, indentation_str: str) -> str:
         return self.TEMPLATE.format(
             name=self._name,
-            type=self._type.generate(),
+            comment=self._comment[0],
+            multiline_comment=(
+                "".join(self._multiline_comment.format(comment) for comment in self._comment[1:])
+                if self._comment else
+                ""
+            ),
             indent=indentation_str * indentation
+        ) if self._comment else ""
+
+
+class ConstructorParameter(FieldType):
+    TEMPLATE = """{name}: {type} = None"""
+
+    def __init__(self, value_type: FieldType, name: str, comment: List[str]):
+        self._type = value_type
+        self._name = name
+        self._comment = comment
+
+    def to_field(self) -> Field:
+        return Field(None, "self.{}".format(self._name), self._name)
+
+    def to_field_comment(self) -> FieldComment:
+        return FieldComment(self._name, self._comment)
+
+    def generate(self) -> str:
+        return self.TEMPLATE.format(
+            name=self._name,
+            type=self._type.generate()
         )
 
 
 class Constructor(CodePart):
-    TEMPLATE = """
-{indent}def __init__(self{args}):
-{indent_inner}pass
+    TEMPLATE = """\
+{indent}def __init__(self{args}):{comments}
+{fields}
 """
+    ARG_SEPARATOR_TEMPLATE = """,
+{indent}             """
 
     def __init__(self, *args: ConstructorParameter):
         self._args = args
 
     def generate(self, indentation: int, indentation_str: str):
+        param_separator = self.ARG_SEPARATOR_TEMPLATE.format(indent=indentation_str * indentation)
         return self.TEMPLATE.format(
             args=(
-                ",\n" + "\n".join(
-                    " " * 13 + a.generate(indentation, indentation_str)
+                param_separator + param_separator.join(
+                    a.generate()
                     for a in self._args
-                )[:-1] if self._args else ""
+                )
+                if self._args else
+                ""
             ),
             indent=indentation_str * indentation,
-            indent_inner=indentation_str * (indentation + 1)
+            fields=(
+                "\n".join(a.to_field().generate(indentation + 1, indentation_str) for a in self._args)
+                if self._args else
+                NO_OP.generate(indentation + 1, indentation_str)
+            ),
+            comments=_Comments(*[a.to_field_comment() for a in self._args]).generate(indentation + 1, indentation_str)
+        )
+
+
+class _Comments(CodePart):
+    TEMPLATE = '''
+{indent}"""
+{args}
+{indent}"""\
+'''
+
+    def __init__(self, *args: FieldComment):
+        self._args = args
+
+    def generate(self, indentation: int, indentation_str: str) -> str:
+        return self.TEMPLATE.format(
+            args="\n".join(a.generate(indentation, indentation_str) for a in self._args if a.has_comment),
+            indent=indentation_str * indentation
+        ) if any(a.has_comment for a in self._args) else ""
+
+
+class _MessageImplementation(CodePart):
+    TEMPLATE = """\
+{indent}# region <<<Message Implementation>>>
+{indent}def __eq__(self, other_msg: '{class_path}') -> bool: ...
+{indent}def __str__(self) -> str: ...
+{indent}def __unicode__(self) -> str: ...
+{indent}def MergeFrom(self, other_msg: '{class_path}'): ...
+{indent}def Clear(self): ...
+{indent}def SetInParent(self): ...
+{indent}def IsInitialized(self) -> bool: ...
+{indent}def MergeFromString(self, serialized: str): ...
+{indent}def SerializeToString(self, **kwargs) -> str: ...
+{indent}def SerializePartialToString(self, **kwargs) -> str: ...
+{indent}def ListFields(self) -> List[FieldDescriptor]: ...
+{indent}def HasField(self, field_name: str) -> bool: ...
+{indent}def ClearField(self, field_name: str): ...
+{indent}def WhichOneof(self, oneof_group: str): ...
+{indent}def HasExtension(self, extension_handle: str) -> bool: ...
+{indent}def ClearExtension(self, extension_handle): ...
+{indent}def DiscardUnknownFields(self): ...
+{indent}def ByteSize(self) -> int: ...
+{indent}def _SetListener(self, message_listener): ...
+
+{indent}# endregion <<<Message Implementation>>>
+{indent}...\
+"""
+
+    def __init__(self, class_path: str):
+        self._class_path = class_path
+
+    def generate(self, indentation: int, indentation_str: str) -> str:
+        return self.TEMPLATE.format(
+            class_path=self._class_path,
+            indent=indentation_str * indentation
         )
 
 
@@ -74,46 +171,21 @@ class Message(CodePart):
     TEMPLATE = """\
 {indent}class {class_name}(Message):
 {fields}
-{indent_inner}# region <<<Message Implementation>>>
-{indent_inner}def __eq__(self, other_msg: '{parent_path}{class_name}') -> bool: ...
-{indent_inner}def __str__(self) -> str: ...
-{indent_inner}def __unicode__(self) -> str: ...
-{indent_inner}def MergeFrom(self, other_msg: '{parent_path}{class_name}'): ...
-{indent_inner}def Clear(self): ...
-{indent_inner}def SetInParent(self): ...
-{indent_inner}def IsInitialized(self) -> bool: ...
-{indent_inner}def MergeFromString(self, serialized: str): ...
-{indent_inner}def SerializeToString(self, **kwargs) -> str: ...
-{indent_inner}def SerializePartialToString(self, **kwargs) -> str: ...
-{indent_inner}def ListFields(self) -> List[FieldDescriptor]: ...
-{indent_inner}def HasField(self, field_name: str) -> bool: ...
-{indent_inner}def ClearField(self, field_name: str): ...
-{indent_inner}def WhichOneof(self, oneof_group: str): ...
-{indent_inner}def HasExtension(self, extension_handle: str) -> bool: ...
-{indent_inner}def ClearExtension(self, extension_handle): ...
-{indent_inner}def DiscardUnknownFields(self): ...
-{indent_inner}def ByteSize(self) -> int: ...
-{indent_inner}def _SetListener(self, message_listener): ...
-
-{indent_inner}# endregion <<<Message Implementation>>>
-{indent_inner}...
 """
 
     def __init__(self, name: str, parents: List[str], *inner: CodePart):
         self._name = name
         self._parent_path = ".".join(parents) + ("." if parents else "")
-
         self._inner = list(inner)
-        if not self._inner:
-            self._inner.append(NO_OP)
+        self._inner.append(NEW_LINE)
+        self._inner.append(_MessageImplementation(self._parent_path + self._name))
 
     def generate(self, indentation: int, indentation_str: str) -> str:
         return self.TEMPLATE.format(
             class_name=self._name,
             parent_path=self._parent_path,
             fields="".join(i.generate(indentation + 1, indentation_str) for i in self._inner),
-            indent=indentation_str * indentation,
-            indent_inner=indentation_str * (indentation + 1)
+            indent=indentation_str * indentation
         )
 
 
@@ -151,7 +223,8 @@ class Import(CodePart):
 
     def __contains__(self, item: 'Union[Import, str]'):
         if isinstance(item, Import):
-            return item._path == self._path and (not self._from_items or all(i in self._from_items for i in item._from_items))
+            return item._path == self._path and (
+                    not self._from_items or all(i in self._from_items for i in item._from_items))
         elif isinstance(item, str):
             path, name = item.split('.')[1:]
             return path == self._path and (not self._from_items or name in self._from_items)

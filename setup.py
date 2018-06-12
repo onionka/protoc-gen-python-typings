@@ -1,14 +1,13 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
 setup(
     name="ProtoC Python Typing generator plugin",
-    version="0.1",
-    packages=find_packages(),
-    scripts=['protoc-gen-python_grpc_typings', 'protoc-gen-python_typings'],
+    version="0.2",
 
     install_requires=['protobuf'],
 
-    package_data={'stubs_generator': ['*.py']},
+    scripts=['protoc-gen-python_grpc_typings', 'protoc-gen-python_typings'],
+    packages=['stubs_generator'],
 
     # metadata for upload to PyPI
     author="Miroslav Cibulka",
@@ -16,7 +15,7 @@ setup(
     description="ProtoC code generator plugin",
     license="MIT",
     keywords="proto3 typing python library script",
-    url="https://github.com/Cmiroslaf/protoc-gen-python-typings",   # project home page, if any
+    url="https://github.com/Cmiroslaf/protoc-gen-python-typings",  # project home page, if any
     project_urls={
         "Bug Tracker": "https://github.com/Cmiroslaf/protoc-gen-python-typings/issues",
         "Documentation": "https://docs.example.com/HelloWorld/",
