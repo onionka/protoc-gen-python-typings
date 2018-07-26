@@ -94,29 +94,22 @@ def decode_type(type: int = FieldDescriptor.TYPE_MESSAGE, name: str = None, repe
 def get_comments(pf) -> Dict[str, List[str]]:
     """Retrieves comments from proto file and creates a dictionary symbol which comment was aimed at"""
     def _get_inner():
+        i = 0
         for location in pf.source_code_info.location:
-            if location.trailing_comments or location.leading_comments:
+            if location.trailing_comments:
                 pf_p = pf
                 cls_path = []
                 for path in location.path:
-                    try:
-                        if hasattr(pf_p, "field") or hasattr(pf_p, "method"):
-                            cls_path.append(pf_p.name)
-                        pf_p = (
-                            list(pf_p)[path]
-                            if isinstance(pf_p, Iterable) else
-                            getattr(pf_p, pf_p.DESCRIPTOR.fields_by_number[path].name)
-                        )
-                    except AttributeError as ex:
-                        raise Exception(pf_p, path) from ex
-
+                    if hasattr(pf_p, "field") or hasattr(pf_p, "method"):
+                        cls_path.append(pf_p.name)
+                    if isinstance(pf_p, Iterable):
+                        pf_p = list(pf_p)[path]
+                    else:
+                        pf_p = getattr(pf_p, pf_p.DESCRIPTOR.fields_by_number[path].name)
                 # cls_path - parent object names, pf_p - message from decoder
                 # location.trailing_comments - at the end of the line
-                # location.leading_comments - after commented item
-                if location.trailing_comments:
-                    yield ".".join(cls_path + [pf_p.name]), [location.trailing_comments.splitlines()[0]]
-                else:
-                    yield ".".join(cls_path + [pf_p.name]), location.leading_comments.splitlines()
+                yield ".".join(cls_path + [pf_p.name]), location.trailing_comments.splitlines()
+            i += 1
 
-    return dict()
-    # return dict(_get_inner())
+    # return dict()
+    return dict(_get_inner())

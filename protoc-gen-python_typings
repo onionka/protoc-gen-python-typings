@@ -35,10 +35,12 @@ def generate_message_stub(proto_name, import_pool, comments, msg, parents=None) 
             _else=[NEW_LINE]
         ),
         Constructor(
-            *[ConstructorParameter(decode_type(
-                field.type, field.type_name, field.label == FieldDescriptor.LABEL_REPEATED,
-                import_pool, proto_name, (parents or []) + [msg.name]
-            ), field.name, comments.get(".".join((parents or []) + [msg.name, field.name]), [])) for field in msg.field]
+            *[ConstructorParameter(
+                decode_type(field.type, field.type_name, field.label == FieldDescriptor.LABEL_REPEATED,
+                            import_pool, proto_name, (parents or []) + [msg.name]),
+                field.name,
+                comments.get(".".join((parents or []) + [msg.name, field.name]), [])
+                ) for field in msg.field]
         ),
     )
 

@@ -7,7 +7,7 @@ from google.protobuf.descriptor_pb2 import FileDescriptorProto
 from stubs_generator.base import ConstantPart, NEW_LINE
 from stubs_generator.messages import File, Import
 from stubs_generator.servicers import AbstractMethod, AddToServerMethod, Servicer, Stub, StubMethod
-from stubs_generator.utils import ImportPool, after_every, decode_type, before_every, get_comments
+from stubs_generator.utils import ImportPool, before_every, decode_type, get_comments
 
 DEFAULT_TAB_STR = '    '
 
@@ -41,8 +41,9 @@ def generate_pb2_grpc_stub_file_content(proto_descriptor: FileDescriptorProto) -
                              decode_type(name=meth.output_type,
                                          import_pool=import_pool,
                                          proto_name=proto_descriptor.name[:-6]),
-                             )
-                  for meth in s.method]
+                             comments.get("{}.{}".format(s.name, meth.name), []))
+                  for meth in s.method],
+                comments=comments.get(s.name, []),
             ) for s in proto_descriptor.service],
             # Abstract servicer
             *[Servicer(
@@ -53,8 +54,10 @@ def generate_pb2_grpc_stub_file_content(proto_descriptor: FileDescriptorProto) -
                                              proto_name=proto_descriptor.name[:-6]),
                                  decode_type(name=meth.output_type,
                                              import_pool=import_pool,
-                                             proto_name=proto_descriptor.name[:-6]))
-                  for meth in s.method]
+                                             proto_name=proto_descriptor.name[:-6]),
+                                 comments.get("{}.{}".format(s.name, meth.name), []))
+                  for meth in s.method],
+                comments=comments.get(s.name, []),
             ) for s in proto_descriptor.service],
             *[AddToServerMethod(s.name)
               for s in proto_descriptor.service]
@@ -79,6 +82,10 @@ if __name__ == '__main__':
                 name="{}_pb2_grpc.pyi".format(proto_file.name[:-6]),
                 content=generate_pb2_grpc_stub_file_content(proto_file)
             )
+            # response.file.add(
+            #     name="debug_for_{}_proto".format(proto_file.name[:-6]),
+            #     content=str(proto_file)
+            # )
 
     # Serialise response message
     output = response.SerializeToString()
